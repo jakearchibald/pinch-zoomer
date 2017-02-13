@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Loading - JakeArchibald.com</title>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0">
+  <style>
+    .test {
+      background: 
+        radial-gradient(
+          circle at 100% 50%, transparent 20%, 
+          rgba(255,255,255,.3) 21%, 
+          rgba(255,255,255,.3) 34%,
+          transparent 35%, transparent
+        ),
+        radial-gradient(
+          circle at 0% 50%,
+          transparent 20%, 
+          rgba(255,255,255,.3) 21%,
+          rgba(255,255,255,.3)
+          34%, transparent 35%, transparent
+        ) 0 -50px;
+      background-color: slategray;
+      background-size:75px 100px;
+      width: 300px;
+      height: 300px;
+    }
+
+    pinch-zoomer {
+      display: inline-block;
+      overflow: auto;
+      background: green;
+    }
+  </style>
+  <script src="../dist/index.js" async></script>
+</head>
+<body>
+  <pinch-zoomer>
+    <div class="test"></div>
+  </pinch-zoomer>
+</body>
+</html>

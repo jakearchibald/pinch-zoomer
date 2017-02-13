@@ -1,0 +1,20 @@
+{
+  "name": "pinch-zoomer",
+  "version": "1.0.0",
+  "description": "Pinch-zooming web component",
+  "main": "index.js",
+  "repository": "git@github.com:jakearchibald/pinch-zoomer.git",
+  "author": "Jake Archibald <jaffathecake@gmail.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "rollup --config | babili > dist/index.js",
+    "dev": "rollup --config --watch --output dist/index.js"
+  },
+  "dependencies": {
+    "babili": "^0.0.11",
+    "rollup": "^0.41.4",
+    "rollup-plugin-commonjs": "^7.0.0",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-watch": "^3.2.2"
+  }
+}
