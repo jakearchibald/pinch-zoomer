@@ -46,6 +46,8 @@ const styleText = `
   }
   .transformer {
     transform-origin: 0 0;
+    min-width: min-content;
+    min-height: min-content;
   }
 `;
 
@@ -115,8 +117,8 @@ function updateInitial(pinchZoomer) {
   const innerUnscaledHeight = innerBounds.height / currentScale;
 
   innerScale.set(pinchZoomer, scale);
-  innerTranslateX.set(pinchZoomer, (outerBounds.width - (innerUnscaledWidth * scale)) / 2);
-  innerTranslateY.set(pinchZoomer, (outerBounds.height - (innerUnscaledHeight * scale)) / 2);
+  innerTranslateX.set(pinchZoomer, Math.max(0, (outerBounds.width - (innerUnscaledWidth * scale)) / 2));
+  innerTranslateY.set(pinchZoomer, Math.max(0, (outerBounds.height - (innerUnscaledHeight * scale)) / 2));
 }
 
 function updateMinScale(pinchZoomer) {
@@ -173,15 +175,21 @@ export default class PinchZoomer extends HTMLElement {
       userInteracted.set(this, true);
 
       const scroller = scrollers.get(this);
+      const transformer = transformers.get(this);
       const elScale = innerScale.get(this);
+      const outerBounds = scroller.getBoundingClientRect();
       const innerBounds = transformers.get(this).getBoundingClientRect();
+      const x1 = event.touches[0].clientX - outerBounds.left;
+      const x2 = event.touches[1].clientX - outerBounds.left;
+      const y1 = event.touches[0].clientY - outerBounds.top;
+      const y2 = event.touches[1].clientY - outerBounds.top;
 
       // Record start values
       innerNaturalWidth.set(this, innerBounds.width / elScale);
       innerNaturalHeight.set(this, innerBounds.height / elScale);
       activeTouchIds.set(this, [...event.touches].map(t => t.identifier));
-      startPinchX.set(this, (event.touches[0].pageX + event.touches[1].pageX) / 2);
-      startPinchY.set(this, (event.touches[0].pageY + event.touches[1].pageY) / 2);
+      startPinchX.set(this, (x1 + x2) / 2);
+      startPinchY.set(this, (y1 + y2) / 2);
       startPinchDistance.set(this, getTouchDistance(event.touches[0], event.touches[1]));
       
       // Switch from regular scrolling to transform
@@ -190,6 +198,7 @@ export default class PinchZoomer extends HTMLElement {
       scroller.style.overflow = 'hidden';
       scroller.scrollLeft = 0;
       scroller.scrollTop = 0;
+      transformer.style.willChange = 'transform';
 
       updateTransformer(this);
       scroller.addEventListener('touchmove', touchMoveListeners.get(this));
@@ -199,8 +208,12 @@ export default class PinchZoomer extends HTMLElement {
     touchMoveListeners.set(this, event => {
       event.preventDefault();
       const outerBounds = scrollers.get(this).getBoundingClientRect();
-      const avgX = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-      const avgY = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+      const x1 = event.touches[0].clientX - outerBounds.left;
+      const x2 = event.touches[1].clientX - outerBounds.left;
+      const y1 = event.touches[0].clientY - outerBounds.top;
+      const y2 = event.touches[1].clientY - outerBounds.top;
+      const avgX = (x1 + x2) / 2;
+      const avgY = (y1 + y2) / 2;
       const distance = getTouchDistance(event.touches[0], event.touches[1]);
       const distanceDiff = distance / startPinchDistance.get(this);
       const elScale = innerScale.get(this);
@@ -285,6 +298,7 @@ export default class PinchZoomer extends HTMLElement {
       event.preventDefault();
 
       const scroller = scrollers.get(this);
+      const transformer = transformers.get(this);
 
       pinching.set(this, false);
       scroller.removeEventListener('touchmove', touchMoveListeners.get(this));
@@ -307,6 +321,7 @@ export default class PinchZoomer extends HTMLElement {
       innerTranslateX.set(this, Math.max(xOffset, 0));
       innerTranslateY.set(this, Math.max(yOffset, 0));
 
+      transformer.style.willChange = '';
       updateTransformer(this);
 
       scroller.style.overflow = '';
@@ -334,6 +349,7 @@ export default class PinchZoomer extends HTMLElement {
   connectedCallback() {
     if (!userInteracted.get(this)) {
       updateInitial(this);
+      updateTransformer(this);
     }
 
     updateMinScale(this);
@@ -343,7 +359,32 @@ export default class PinchZoomer extends HTMLElement {
     return ['initialscale', 'minscale', 'maxscale', 'controls'];
   }
   attributeChangedCallback(name) {
-    //console.log('changed', name);
+    console.log('attr change', name);
+    let minScale;
+
+    switch (name) {
+      case 'initialscale':
+        if (!userInteracted.get(this)) {
+          updateInitial(this);
+          updateTransformer(this);
+        }
+        break;
+      case 'minscale':
+        updateMinScale(this);
+        minScale = computedMinScale.get(this);
+
+        if (minScale > innerScale.get(this)) {
+          innerScale.set(this, minScale);
+          updateTransformer(this);
+        }
+        break;
+      case 'maxscale':
+        if (innerScale.get(this) > this.maxScale) {
+          innerScale.set(this, this.maxScale);
+          updateTransformer(this);
+        }
+        break;
+    }
   }
   changeTo({
     x, y, scale,

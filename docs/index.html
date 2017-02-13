@@ -29,12 +29,16 @@
       display: inline-block;
       overflow: auto;
       background: green;
+      margin-bottom: 50vh;
     }
   </style>
   <script src="../dist/index.js" async></script>
 </head>
 <body>
-  <pinch-zoomer>
+  <pinch-zoomer initialscale="cover" style="width:300px; height: 500px">
+    <img width="350" height="248" src="car-lite.svg">
+  </pinch-zoomer>
+  <pinch-zoomer initialscale="contain" maxscale="5">
     <div class="test"></div>
   </pinch-zoomer>
 </body>
